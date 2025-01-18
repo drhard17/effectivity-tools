@@ -1,28 +1,20 @@
-package ru.yakovlev.effectivity;
+package ru.yakovlev.effectivity.service;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import ru.yakovlev.effectivity.model.Effectivity;
+import ru.yakovlev.effectivity.model.EndItem;
+import ru.yakovlev.effectivity.model.EndItemSet;
 
-/**
- * Класс для хранения и операций с применяемостью - набором серийных номеров конечных изделий
- */
-
-public class Effectivity {
+public class EffectivityServiceImpl {
 
     static final String UP_LITERAL = "-UP";
     private static final String JOURNAL_DELIMITER = "; ";
     private static final String JOURNAL_NUM_FORMAT = "%04d";
-    
-    private final List<EndItemSet> endItemSets;
 
-    private Effectivity() {
-        this.endItemSets = new ArrayList<>();
-    }
-
-    /**
+        /**
      * Преобразует применяемость в формате Teamcenter в объект Effectivity
      * @param tcString - значение из Teamcenter, пример - "1, 3, 4 (MC-21) 99011 (ST-21)"
      * @return объект Effectivity
@@ -47,7 +39,7 @@ public class Effectivity {
             boolean isUP = rangeToken.contains(UP_LITERAL);
 
             EndItemSet endItemSet = new EndItemSet(endItem, serialNumbers, isUP);
-            effectivity.addSet(endItemSet);
+            addSetToEffectivity(effectivity, endItemSet);
         }
         return effectivity;
     }
@@ -63,9 +55,9 @@ public class Effectivity {
         Effectivity effectivity = new Effectivity();
 
         Arrays.stream(EndItem.values())
-                .map(endItem -> EndItemSet.parseJournalEndItemSet(journalString, endItem))
+                .map(endItem -> EndItemSetServiceImpl.parseJournalEndItemSet(journalString, endItem))
                 .filter(set -> set != null)
-                .forEach(effectivity::addSet);
+                .forEach(endItemSet -> addSetToEffectivity(effectivity, endItemSet));
 
         return effectivity;
     }
@@ -75,53 +67,25 @@ public class Effectivity {
      * @return
      */
 
-    public String toJournalString() {
-        return this.endItemSets.stream()
+    public static String toJournalString(Effectivity effectivity) {
+        return effectivity.getEndItemSets().stream()
                 .map(set -> {
-                    String endItemList = set.serialNumbers.stream()
+                    String endItemList = set.getSerialNumbers().stream()
                             .map(serialNumber -> String.format(JOURNAL_NUM_FORMAT, serialNumber))
                             .collect(Collectors.joining(JOURNAL_DELIMITER));
-                    return set.isUP ? endItemList + UP_LITERAL : endItemList;
+                    return set.getIsUp() ? endItemList + UP_LITERAL : endItemList;
                 })
                 .sorted()
                 .collect(Collectors.joining(JOURNAL_DELIMITER));
     }
 
-    /**
-     * Проверяет вхождение Effectivity в Effectivity
-     * @param effectivity
-     * @return
-     */
+    // TODO убрать trimUp
+    private static Effectivity addSetToEffectivity(Effectivity effectivity, EndItemSet endItemSet) {
 
-    public boolean contains(Effectivity effectivity) {
-        return effectivity.endItemSets.stream().
-                allMatch(this::containsEndItemSet);
+        List<EndItemSet> endItemSets = effectivity.getEndItemSets();
+        endItemSets.add(EndItemSetServiceImpl.trimUpEndItemSet(endItemSet));
+
+        return new Effectivity(endItemSets);
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || this.getClass() != obj.getClass()) {
-            return false;
-        }
-        Effectivity effectivity = (Effectivity) obj;
-        return this.endItemSets.containsAll(effectivity.endItemSets) &&
-                effectivity.endItemSets.containsAll(this.endItemSets);
-    }
-    
-    private boolean containsEndItemSet(EndItemSet endItemSet) {
-        return this.endItemSets.stream()
-                .anyMatch(set -> 
-                        set.endItem == endItemSet.endItem && 
-                        set.containsSet(endItemSet));
-    }
-    
-    private void addSet(EndItemSet endItemSet) {
-        this.endItemSets.add(endItemSet.trimUp());
-    }
 }
-
-
-  

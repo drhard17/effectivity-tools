@@ -5,12 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static ru.yakovlev.effectivity.Effectivity.parseTcString;
-import static ru.yakovlev.effectivity.Effectivity.parseJournalString;
+import static ru.yakovlev.effectivity.service.EffectivityServiceImpl.parseJournalString;
+import static ru.yakovlev.effectivity.service.EffectivityServiceImpl.parseTcString;
+import static ru.yakovlev.effectivity.service.EffectivityServiceImpl.toJournalString;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import ru.yakovlev.effectivity.model.Effectivity;
 
 
 /**
@@ -20,7 +22,7 @@ public class EffectivityTest {
 
     @Test
     public void wrongParameterTest() {
-        Exception e = assertThrows(Exception.class, () -> Effectivity.parseTcString("abc"));
+        Exception e = assertThrows(Exception.class, () -> parseTcString("abc"));
         assertEquals("Wrong TC effectivity string - abc", e.getMessage());
     }
 
@@ -33,7 +35,7 @@ public class EffectivityTest {
         99001
     """ + " ")
     void wrongTcStringTest(String tcEffectivity) {
-        assertThrows(Exception.class, () -> Effectivity.parseTcString(tcEffectivity));
+        assertThrows(Exception.class, () -> parseTcString(tcEffectivity));
         // Exception e = assertThrows(Exception.class, () -> Effectivity.parseTcString(tcEffectivity));
         // assertEquals("Wrong TC effectivity string - " + tcEffectivity, e.getMessage());
     }
@@ -49,21 +51,21 @@ public class EffectivityTest {
     void tcToJournalConverterTest(String tcEffectivity, String journalEffectivity) {
         assertDoesNotThrow( () -> {
             Effectivity eff = parseTcString(tcEffectivity);
-            assertEquals(eff.toJournalString(), journalEffectivity);
+            assertEquals(journalEffectivity, toJournalString(eff));
         });
     }
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', textBlock = """
         0001;99012; 0002 0003; 0012;                |   0001; 0002; 0003; 0012; 99012
-        990011; 0001; 0013-UP                       |   0001; 0013-UP; 990011
         0001; 0002; 0003-UP                         |   0001-UP
+        990011; 0001; 0013-UP                       |   0001; 0013-UP; 990011
         00001; 0002; 0003; 0004;                    |   0001; 0002; 0003; 0004
         001; 0002; 0003; 0004                       |   0001; 0002; 0003; 0004
     """)
     void journalParsingTest(String source, String expected) {
         Effectivity eff = parseJournalString(source);
-        assertEquals(eff.toJournalString(), expected);
+        assertEquals(expected, toJournalString(eff));
     }
 
     @Test
@@ -71,7 +73,7 @@ public class EffectivityTest {
         String source = "0001; 0002\r0003;\n0004\n99012";
         String expected = "0001; 0002; 0003; 0004; 99012";
         Effectivity eff = parseJournalString(source);
-        assertEquals(eff.toJournalString(), expected);
+        assertEquals(toJournalString(eff), expected);
     }
 
     @ParameterizedTest

@@ -1,8 +1,8 @@
-package ru.yakovlev.effectivity;
+package ru.yakovlev.effectivity.model;
 
 import java.util.Arrays;
 
-enum EndItem {
+public enum EndItem {
     MC21("MC-21", "MC21", "МС-21", "МС21") {
 
         final String journalPattern = "0\\d{3}";
@@ -15,11 +15,11 @@ enum EndItem {
         }
 
         @Override
-        String getJournalPattern() {
+        public String getJournalPattern() {
             return journalPattern;
         }
-
     },
+
     ST21("ST-21", "ST21") {
 
         final String journalPattern = "99\\d{3,4}";
@@ -32,10 +32,11 @@ enum EndItem {
         }
 
         @Override
-        String getJournalPattern() {
+        public String getJournalPattern() {
             return journalPattern;
         }
     },
+
     YAK152("152", "YAK152", "YAK-152", "Як-152", "Як152") {
 
         final String journalPattern = "1520\\d{3}";
@@ -48,7 +49,7 @@ enum EndItem {
         }
 
         @Override
-        String getJournalPattern() {
+        public String getJournalPattern() {
             return journalPattern;
         }
     };
@@ -59,7 +60,7 @@ enum EndItem {
         this.aliases = aliases;
     }
 
-    static EndItem fromAlias(String alias) {
+    public static EndItem fromAlias(String alias) {
         return Arrays.stream(EndItem.values())
                 .filter(endItem -> Arrays.stream(endItem.aliases)
                             .anyMatch(a -> a.equalsIgnoreCase(alias)))
@@ -68,7 +69,7 @@ enum EndItem {
                     () -> new IllegalArgumentException("Enditem recognition error - " + alias));
     }
 
-    abstract String getJournalPattern();
+    public abstract String getJournalPattern();
 
     abstract String getTCid();
 

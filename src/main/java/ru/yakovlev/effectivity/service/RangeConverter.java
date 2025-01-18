@@ -1,10 +1,10 @@
-package ru.yakovlev.effectivity;
+package ru.yakovlev.effectivity.service;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
 
-class RangeConverter {
+public class RangeConverter {
     // Converts a list of integers into a string with ranges
     static String convertToRanges(List<Integer> numbers) {
         if (numbers == null || numbers.isEmpty()) {
@@ -81,20 +81,20 @@ class RangeConverter {
     }
 
     // Продлевает множество от конечного элемента до заданного включительно
-    static TreeSet<Integer> expandSet(TreeSet<Integer> set, int expandTo) {
+    // static TreeSet<Integer> expandSet(TreeSet<Integer> set, int expandTo) {
 
-        int expandFrom = set.last();
-        if (expandFrom >= expandTo) {
-            return set;
-        }
+    //     int expandFrom = set.last();
+    //     if (expandFrom >= expandTo) {
+    //         return set;
+    //     }
 
-        TreeSet<Integer> resultSet = new TreeSet<>(set);
+    //     TreeSet<Integer> resultSet = new TreeSet<>(set);
 
-        for (int i = expandFrom + 1; i <= expandTo; i++) {
-            resultSet.add(i);
-        }
+    //     for (int i = expandFrom + 1; i <= expandTo; i++) {
+    //         resultSet.add(i);
+    //     }
 
-        return resultSet;
-    }
+    //     return resultSet;
+    // }
 
 }
