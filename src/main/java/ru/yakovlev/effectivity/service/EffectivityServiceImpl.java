@@ -2,17 +2,19 @@ package ru.yakovlev.effectivity.service;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
+import ru.yakovlev.effectivity.exception.EffectivityException;
 import ru.yakovlev.effectivity.model.Effectivity;
 import ru.yakovlev.effectivity.model.EndItem;
 import ru.yakovlev.effectivity.model.EndItemSet;
+import ru.yakovlev.effectivity.model.UnitRange;
+import static ru.yakovlev.effectivity.service.EndItemSetServiceImpl.parseTcUnitRanges;
+import static ru.yakovlev.effectivity.service.EndItemSetServiceImpl.converEndItemSetUnitRangesToSequence;
+import static ru.yakovlev.effectivity.service.EndItemSetServiceImpl.parseEndItemSetfromJournalString;
 
 public class EffectivityServiceImpl {
 
     static final String UP_LITERAL = "-UP";
-    private static final String JOURNAL_DELIMITER = "; ";
-    private static final String JOURNAL_NUM_FORMAT = "%04d";
 
         /**
      * Преобразует применяемость в формате Teamcenter в объект Effectivity
@@ -21,25 +23,18 @@ public class EffectivityServiceImpl {
      */
 
     public static Effectivity parseTcString(String tcString) {
-
         String[] tokens = tcString.split(" \\(|\\) |\\)");
         if (tokens.length < 2 || tokens.length % 2 != 0) {
-            throw new IllegalArgumentException("Wrong TC effectivity string - " + tcString);
+            throw new EffectivityException("Wrong TC effectivity string - " + tcString);
         }
         
         Effectivity effectivity = new Effectivity();
        
         for (int i = 0; i < tokens.length - 1; i = i + 2) {
-            String rangeToken = tokens[i];
-            String endItemToken = tokens[i + 1];
-            
-            String range = rangeToken.replace(UP_LITERAL, "");
-            TreeSet<Integer> serialNumbers = RangeConverter.convertFromRanges(range);
-            EndItem endItem = EndItem.fromAlias(endItemToken);
-            boolean isUP = rangeToken.contains(UP_LITERAL);
-
-            EndItemSet endItemSet = new EndItemSet(endItem, serialNumbers, isUP);
-            addSetToEffectivity(effectivity, endItemSet);
+            EndItem endItem = EndItem.fromAlias(tokens[i + 1]);
+            List<UnitRange> unitRanges = parseTcUnitRanges(tokens[i]);
+            EndItemSet endItemSet = new EndItemSet(endItem, unitRanges);
+            effectivity.addEndItemSet(endItemSet);
         }
         return effectivity;
     }
@@ -55,9 +50,9 @@ public class EffectivityServiceImpl {
         Effectivity effectivity = new Effectivity();
 
         Arrays.stream(EndItem.values())
-                .map(endItem -> EndItemSetServiceImpl.parseJournalEndItemSet(journalString, endItem))
-                .filter(set -> set != null)
-                .forEach(endItemSet -> addSetToEffectivity(effectivity, endItemSet));
+                .map(endItem -> parseEndItemSetfromJournalString(journalString, endItem))
+                .filter(set -> set.getUnitRanges().size() != 0)
+                .forEach(endItemSet -> effectivity.addEndItemSet(endItemSet));
 
         return effectivity;
     }
@@ -69,23 +64,9 @@ public class EffectivityServiceImpl {
 
     public static String toJournalString(Effectivity effectivity) {
         return effectivity.getEndItemSets().stream()
-                .map(set -> {
-                    String endItemList = set.getSerialNumbers().stream()
-                            .map(serialNumber -> String.format(JOURNAL_NUM_FORMAT, serialNumber))
-                            .collect(Collectors.joining(JOURNAL_DELIMITER));
-                    return set.getIsUp() ? endItemList + UP_LITERAL : endItemList;
-                })
+                .map(set -> converEndItemSetUnitRangesToSequence(set))
                 .sorted()
-                .collect(Collectors.joining(JOURNAL_DELIMITER));
-    }
-
-    // TODO убрать trimUp
-    private static Effectivity addSetToEffectivity(Effectivity effectivity, EndItemSet endItemSet) {
-
-        List<EndItemSet> endItemSets = effectivity.getEndItemSets();
-        endItemSets.add(EndItemSetServiceImpl.trimUpEndItemSet(endItemSet));
-
-        return new Effectivity(endItemSets);
+                .collect(Collectors.joining("; "));
     }
 
 }

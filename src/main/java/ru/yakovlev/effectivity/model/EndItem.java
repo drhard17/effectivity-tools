@@ -1,11 +1,12 @@
 package ru.yakovlev.effectivity.model;
 
 import java.util.Arrays;
+import ru.yakovlev.effectivity.exception.EffectivityException;
 
 public enum EndItem {
     MC21("MC-21", "MC21", "МС-21", "МС21") {
 
-        final String journalPattern = "0\\d{3}";
+        final String journalPattern = "0\\d{2}[1-9](-UP)?";
 
         final String tcId = "MC-21";
 
@@ -66,7 +67,7 @@ public enum EndItem {
                             .anyMatch(a -> a.equalsIgnoreCase(alias)))
                 .findFirst()
                 .orElseThrow(
-                    () -> new IllegalArgumentException("Enditem recognition error - " + alias));
+                    () -> new EffectivityException("Enditem recognition error - " + alias));
     }
 
     public abstract String getJournalPattern();

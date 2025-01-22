@@ -2,12 +2,15 @@ package ru.yakovlev.effectivity.model;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 /**
  * Класс для хранения и операций с применяемостью - набором серийных номеров конечных изделий
  */
 
+@Getter
+@AllArgsConstructor
 public class Effectivity {
 
     private final List<EndItemSet> endItemSets;
@@ -16,12 +19,8 @@ public class Effectivity {
         this.endItemSets = new ArrayList<>();
     }
 
-    public Effectivity(List<EndItemSet> endItemSets) {
-        this.endItemSets = endItemSets;
-    }
-
-    public List<EndItemSet> getEndItemSets() {
-        return endItemSets;
+    public void addEndItemSet(EndItemSet endItemSet) {
+        this.endItemSets.add(endItemSet);
     }
 
     /**
@@ -47,14 +46,18 @@ public class Effectivity {
         return this.endItemSets.containsAll(effectivity.endItemSets) &&
                 effectivity.endItemSets.containsAll(this.endItemSets);
     }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
     
     private boolean containsEndItemSet(EndItemSet endItemSet) {
         return this.endItemSets.stream()
                 .anyMatch(set -> 
                         set.endItem == endItemSet.endItem && 
-                        set.containsSet(endItemSet));
+                        set.contains(endItemSet));
     }
-    
 
 }
 

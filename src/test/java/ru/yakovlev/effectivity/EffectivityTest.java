@@ -1,5 +1,11 @@
 package ru.yakovlev.effectivity;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import ru.yakovlev.effectivity.exception.EffectivityException;
+import ru.yakovlev.effectivity.model.Effectivity;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -9,22 +15,14 @@ import static ru.yakovlev.effectivity.service.EffectivityServiceImpl.parseJourna
 import static ru.yakovlev.effectivity.service.EffectivityServiceImpl.parseTcString;
 import static ru.yakovlev.effectivity.service.EffectivityServiceImpl.toJournalString;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
-import ru.yakovlev.effectivity.model.Effectivity;
 
 
 /**
  * Unit test for Effectivity class
  */
+
 public class EffectivityTest {
 
-    @Test
-    public void wrongParameterTest() {
-        Exception e = assertThrows(Exception.class, () -> parseTcString("abc"));
-        assertEquals("Wrong TC effectivity string - abc", e.getMessage());
-    }
 
     @ParameterizedTest
     @CsvSource(textBlock = """
@@ -33,20 +31,19 @@ public class EffectivityTest {
         0011; 0013-UP; 99012; 990151
         1-UP
         99001
+        20-11, 13-UP (MC-21)
     """ + " ")
     void wrongTcStringTest(String tcEffectivity) {
-        assertThrows(Exception.class, () -> parseTcString(tcEffectivity));
-        // Exception e = assertThrows(Exception.class, () -> Effectivity.parseTcString(tcEffectivity));
-        // assertEquals("Wrong TC effectivity string - " + tcEffectivity, e.getMessage());
+        assertThrows(EffectivityException.class, () -> parseTcString(tcEffectivity));
     }
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', textBlock = """
         8-11, 13-UP (MC-21) 990151, 99012 (ST-21)   |   0008; 0009; 0010; 0011; 0013-UP; 99012; 990151
         1-3, 4 (MC-21) 99011, 99011 (ST-21)         |   0001; 0002; 0003; 0004; 99011
-        1-3, 4-UP (MC-21)                           |   0001-UP
+        1-3, 4, 4-UP (MC-21)                           |   0001-UP
         99001 (ST-21) 1-3, 6-UP (MC-21)             |   0001; 0002; 0003; 0006-UP; 99001
-        9-11 (MC-21) 13-UP (MC-21)                  |   0009; 0010; 0011; 0013-UP
+        9-11, 11 (MC-21) 13-UP (MC-21)                  |   0009; 0010; 0011; 0013-UP
     """)
     void tcToJournalConverterTest(String tcEffectivity, String journalEffectivity) {
         assertDoesNotThrow( () -> {
@@ -64,12 +61,12 @@ public class EffectivityTest {
         001; 0002; 0003; 0004                       |   0001; 0002; 0003; 0004
     """)
     void journalParsingTest(String source, String expected) {
-        Effectivity eff = parseJournalString(source);
-        assertEquals(expected, toJournalString(eff));
+        Effectivity effectivity = parseJournalString(source);
+        assertEquals(expected, toJournalString(effectivity));
     }
 
     @Test
-    void journalParsingTestWithCrlf() {
+    void journalParsingWrongDelimiterTest() {
         String source = "0001; 0002\r0003;\n0004\n99012";
         String expected = "0001; 0002; 0003; 0004; 99012";
         Effectivity eff = parseJournalString(source);
@@ -78,14 +75,16 @@ public class EffectivityTest {
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', textBlock = """
-        11, 13-UP (MC-21) 990151, 99012 (ST-21)     |   11 (MC-21) 990151, 99012, 990151 (ST-21)
-        99001 (ST-21) 1-3, 6-UP (MC-21)             |   1-3, 12 (MC-21) 99012 (ST-21)
-        1-UP (MC-21)                                |   100-UP (MC-21)
+        11, 13-UP (MC-21) 990151, 99012, 99999 (ST-21)  |   11 (MC-21) 990151, 99012, 990151 (ST-21)
+        99012 (ST-21) 1-3, 6-UP (MC-21)                 |   1-3, 12 (MC-21) 99012 (ST-21)
+        1-UP (MC-21)                                    |   100-UP (MC-21)
+        3-4, 10-UP (MC-21)                              |   3-4, 10-UP (MC-21)
+        3-UP (MC-21)                                    |   3-4, 5, 10-UP (MC-21)
     """)
-    void containsTest(String source, String check) {
-        Effectivity effSource = parseTcString(source);
-        Effectivity effCheck = parseTcString(check);
-        assertTrue(effSource.contains(effCheck));
+    void containsTest(String wideTcString, String narrowTcString) {
+        Effectivity wideEffectivity = parseTcString(wideTcString);
+        Effectivity narrowEffectivity = parseTcString(narrowTcString);
+        assertTrue(wideEffectivity.contains(narrowEffectivity));
     }
 
     @ParameterizedTest
