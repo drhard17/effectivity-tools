@@ -6,6 +6,11 @@ import lombok.NonNull;
 import lombok.Setter;
 import ru.yakovlev.effectivity.exception.EffectivityException;
 
+/**
+ * Компонент диапазона от start до end. Если start == end, это единственный экземпляр.
+ * Если end == null, то это открытый диапазон (-UP)
+ */
+
 @Getter
 @Setter
 @EqualsAndHashCode
@@ -28,11 +33,6 @@ public class UnitRange {
                 || (r.end != null && (this.end >= r.end)));
     }
     
-    // public boolean intersects(UnitRange r) {
-    //     return (r.end == null || this.start < r.end)
-    //             && (this.end == null || r.start < this.end);
-    // }
-
     public boolean isOpenRange() {
         return this.end == null;
     }

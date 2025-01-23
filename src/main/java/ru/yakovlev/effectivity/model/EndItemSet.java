@@ -7,9 +7,9 @@ import java.util.List;
 import lombok.Getter;
 
 /**
- * Представляет набор серийных номеров для конкретного конечного изделия.
- * Массив EndItemSet образует объект Effectivity
- *   
+ * Представляет набор диапазонов серийных номеров для конечного изделия,
+ * определенного в EndItem 
+ * Массив EndItemSet образует объект Effectivity.
  */
 
 @Getter
@@ -88,6 +88,11 @@ public class EndItemSet {
     private boolean containsUnitRange(UnitRange unitRange) {
         return this.unitRanges.stream()
                 .anyMatch(r -> r.contains(unitRange));
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
     }
 
     @Override

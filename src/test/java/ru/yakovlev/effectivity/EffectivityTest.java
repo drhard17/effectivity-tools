@@ -3,6 +3,7 @@ package ru.yakovlev.effectivity;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import ru.yakovlev.effectivity.exception.EffectivityException;
 import ru.yakovlev.effectivity.model.Effectivity;
 
@@ -23,7 +24,6 @@ import static ru.yakovlev.effectivity.service.EffectivityServiceImpl.toJournalSt
 
 public class EffectivityTest {
 
-
     @ParameterizedTest
     @CsvSource(textBlock = """
         abc
@@ -32,9 +32,15 @@ public class EffectivityTest {
         1-UP
         99001
         20-11, 13-UP (MC-21)
-    """ + " ")
+    """)
     void wrongTcStringTest(String tcEffectivity) {
         assertThrows(EffectivityException.class, () -> parseTcString(tcEffectivity));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {" ", "", "\r\n", "\r", "\n"})
+    void blankStringParsingTest(String journalString) {
+        assertTrue(parseJournalString(journalString).isEmpty());
     }
 
     @ParameterizedTest
@@ -55,10 +61,8 @@ public class EffectivityTest {
     @ParameterizedTest
     @CsvSource(delimiter = '|', textBlock = """
         0001;99012; 0002 0003; 0012;                |   0001; 0002; 0003; 0012; 99012
-        0001; 0002; 0003-UP                         |   0001-UP
+        0001; 0002; 0003-UP ;                       |   0001-UP
         990011; 0001; 0013-UP                       |   0001; 0013-UP; 990011
-        00001; 0002; 0003; 0004;                    |   0001; 0002; 0003; 0004
-        001; 0002; 0003; 0004                       |   0001; 0002; 0003; 0004
     """)
     void journalParsingTest(String source, String expected) {
         Effectivity effectivity = parseJournalString(source);
@@ -71,6 +75,16 @@ public class EffectivityTest {
         String expected = "0001; 0002; 0003; 0004; 99012";
         Effectivity eff = parseJournalString(source);
         assertEquals(toJournalString(eff), expected);
+    }
+
+    @ParameterizedTest
+    @CsvSource(textBlock = """
+        00001; 0002; 0003; 0004
+        001; 0002; 0003; 0004
+        9999; 1003;
+    """)
+    void wrongJournalStringTest(String journalEffectivity) {
+        assertThrows(EffectivityException.class, () -> parseJournalString(journalEffectivity));
     }
 
     @ParameterizedTest
@@ -115,7 +129,7 @@ public class EffectivityTest {
     @CsvSource(delimiter = '|', textBlock = """
         0001; 0002; 0003-UP                         |   0001; 0002; 0003
     """)
-    void doenNotEqualTest(String source, String check) {
+    void doesNotEqualTest(String source, String check) {
         Effectivity effSource = parseJournalString(source);
         Effectivity effCheck = parseJournalString(check);
         assertFalse(effSource.equals(effCheck));

@@ -19,6 +19,11 @@ public class Effectivity {
         this.endItemSets = new ArrayList<>();
     }
 
+    /**
+     * Добавляет EndItemSet, допустимо несколько EndItemSet'ов c одинаковым EndItem'ом
+     * @param endItemSet
+     */
+
     public void addEndItemSet(EndItemSet endItemSet) {
         this.endItemSets.add(endItemSet);
     }
@@ -32,6 +37,10 @@ public class Effectivity {
     public boolean contains(Effectivity effectivity) {
         return effectivity.endItemSets.stream().
                 allMatch(this::containsEndItemSet);
+    }
+
+    public boolean isEmpty() {
+        return this.endItemSets.isEmpty();
     }
 
     @Override

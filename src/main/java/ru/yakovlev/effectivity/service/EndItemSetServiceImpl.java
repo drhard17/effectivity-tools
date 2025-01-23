@@ -1,63 +1,21 @@
 package ru.yakovlev.effectivity.service;
 
+import static ru.yakovlev.effectivity.service.UnitRangeServiceImpl.convertUnitRangeToSequence;
+import static ru.yakovlev.effectivity.service.UnitRangeServiceImpl.parseSingleUnitRange;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import ru.yakovlev.effectivity.exception.EffectivityException;
 import ru.yakovlev.effectivity.model.EndItem;
 import ru.yakovlev.effectivity.model.EndItemSet;
 import ru.yakovlev.effectivity.model.UnitRange;
 
 public class EndItemSetServiceImpl {
 
-    static List<UnitRange> parseTcUnitRanges(String tcRanges) {
-        return Arrays.stream(tcRanges.split(", "))
-                .map(r -> parseUnitRange(r))
-                .collect(Collectors.toList());
-    }
-
-    private static UnitRange parseUnitRange(String range) {
-        String[] bounds = range.split("-");
-        Integer start = Integer.parseInt(bounds[0]);
-
-        if (bounds.length == 2) {
-            if (bounds[1].equals("UP")) {
-                return new UnitRange(start, null);
-            } else {
-                Integer end = Integer.parseInt(bounds[1]);
-                return new UnitRange(start, end);
-            }
-        }
-
-        return new UnitRange(start, start);
-    }
-
-    static EndItemSet parseEndItemSetfromJournalString(String journalString,
-            EndItem endItem) {
-
-        EndItemSet endItemSet = new EndItemSet(endItem);
-
-        Matcher matcher = Pattern.compile(endItem.getJournalPattern()).matcher(journalString);
-        while (matcher.find()) {
-            String unit = matcher.group();
-            UnitRange unitRange = parseUnitRange(unit);
-            endItemSet.addUnitRange(unitRange);
-        }
-        return endItemSet;
-    }
-
-    static String convertUnitRangeToSequence(UnitRange range, String numFormat, String delimiter) {
-        if (range.isOpenRange()) {
-            return String.format(numFormat, range.getStart()) + "-UP";
-        }
-        return IntStream.rangeClosed(range.getStart(), range.getEnd())
-                .mapToObj(num -> String.format(numFormat, num))
-                .collect(Collectors.joining(delimiter));
-    }
-
-    static String converEndItemSetUnitRangesToSequence(EndItemSet endItemSet) {
+    static String convertEndItemSetUnitRangesToSequence(EndItemSet endItemSet) {
         final String delimiter = "; ";
         final String numFormat = "%04d";
         return endItemSet.getUnitRanges().stream()
@@ -66,4 +24,23 @@ public class EndItemSetServiceImpl {
                 .collect(Collectors.joining(delimiter));
     }
 
+    static EndItemSet parseJournalUnit(String unit, EndItem[] endItems) {
+
+        List<EndItemSet> endItemSets = new ArrayList<>();
+
+        for (EndItem endItem : endItems) {
+            Matcher matcher = Pattern.compile(endItem.getJournalPattern()).matcher(unit);
+            while (matcher.find()) {
+                UnitRange unitRange = parseSingleUnitRange(matcher.group());
+                EndItemSet endItemSet = new EndItemSet(endItem, Arrays.asList(unitRange));
+                endItemSets.add(endItemSet);
+            }
+        }
+
+        if (endItemSets.size() == 1) {
+            return endItemSets.get(0);
+        }
+
+        throw new EffectivityException("Wrong journal unit: " + unit);
+    }
 }
