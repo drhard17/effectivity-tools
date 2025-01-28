@@ -47,9 +47,10 @@ public class EffectivityTest {
     @CsvSource(delimiter = '|', textBlock = """
         8-11, 13-UP (MC-21) 990151, 99012 (ST-21)   |   0008; 0009; 0010; 0011; 0013-UP; 99012; 990151
         1-3, 4 (MC-21) 99011, 99011 (ST-21)         |   0001; 0002; 0003; 0004; 99011
-        1-3, 4, 4-UP (MC-21)                           |   0001-UP
+        1-3, 4, 4-UP (MC-21)                        |   0001-UP
         99001 (ST-21) 1-3, 6-UP (MC-21)             |   0001; 0002; 0003; 0006-UP; 99001
-        9-11, 11 (MC-21) 13-UP (MC-21)                  |   0009; 0010; 0011; 0013-UP
+        9-11, 11 (MC-21) 13-UP (MC-21)              |   0009; 0010; 0011; 0013-UP
+        11-31,17-UP   (MC-21)                       |   0011-UP
     """)
     void tcToJournalConverterTest(String tcEffectivity, String journalEffectivity) {
         assertDoesNotThrow( () -> {

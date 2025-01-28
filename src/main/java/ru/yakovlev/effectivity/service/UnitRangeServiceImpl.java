@@ -18,7 +18,8 @@ public class UnitRangeServiceImpl {
     }
 
     static List<UnitRange> parseTcUnitRanges(String tcRanges) {
-        return Arrays.stream(tcRanges.split(", "))
+        return Arrays.stream(tcRanges.replace(" ", "")
+                .split(","))
                 .map(r -> parseSingleUnitRange(r))
                 .collect(Collectors.toList());
     }
